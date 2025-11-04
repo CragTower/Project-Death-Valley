@@ -8,6 +8,7 @@ const TEMP_MATURE_PLANT = Vector2i(0, 15)
 const TILE_SET_SOURCE_ID = 10
 
 var crops = {}
+var crops_collected = {}
 var day_color = Color(1.0, 1.0, 1.0)
 var night_color = Color(0.3, 0.3, 0.5)
 
@@ -33,6 +34,8 @@ func _on_player_use_item(item_used: String, player_position: Vector2, player_dir
 		try_till_soil(player_position, player_direction)
 	elif item_used == "wheat":
 		try_plant_seed(item_used, player_position, player_direction)
+	elif item_used == "scythe":
+		try_harvest_crop(player_position, player_direction)
 		
 # Changes dirt to tilled soil
 func try_till_soil(player_position: Vector2, player_direction: String):
@@ -55,9 +58,23 @@ func try_plant_seed(current_tool: String, player_position: Vector2, player_direc
 		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TEMP_SEED_IMAGE)
 		crops[target_coords] = {
 			"type" = current_tool,
-			"days_planted" = 0
+			"days_planted" = 0,
+			"mature" = false
 			}
+			
+func try_harvest_crop(player_position: Vector2, player_direction: String):
+	var target_coords = get_player_target_coords(player_position, player_direction)
+	if crops.has(target_coords) and crops[target_coords]["mature"] == true:
+		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
+		if !crops_collected.has(crops[target_coords]["type"]):
+			crops_collected[crops[target_coords]["type"]] = {
+				"count" = 1
+			}
+		else:
+			crops_collected[crops[target_coords]["type"]]["count"] += 1
+		print(crops_collected["wheat"]["count"])
 		
+		crops.erase(target_coords)
 	
 func get_player_target_coords(player_position: Vector2, player_direction: String):
 	# Sets target position to 1 tile in front of player
@@ -106,3 +123,4 @@ func _on_day_changed_grow_crops():
 		
 		if crops[tile_coords]["days_planted"] == 3:
 			tile_map_layer.set_cell(tile_coords, TILE_SET_SOURCE_ID, TEMP_MATURE_PLANT)
+			crops[tile_coords]["mature"] = true

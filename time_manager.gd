@@ -1,9 +1,11 @@
 extends Node
 
-var time_scale = 180.0  # 1 real second = 1 game minut
-var game_minutes = 240.0  # Start at 6:00 AM
+# Config for Timer
+var time_scale = 180.0  # Speed of time (1.0 = 1 irl second or 1 in-game minute)
+var game_minutes = 240.0  # Day Start time (360 = 6 AM)
 var last_displayed_minute = -1  # For display updates - only update UI when needed
 
+# Signals for when time changes and when a new day occurs (Midnight)
 signal time_changed(hours: int, minutes: int)
 signal new_day()
 
@@ -11,7 +13,7 @@ func _process(delta: float) -> void:
 	# Accumulate time CONTINUOUSLY (every frame)
 	game_minutes += delta * time_scale
 	
-	# Wrap at 24 hours
+	# Wrap at 24 hours and signal a new day has occurred
 	if game_minutes >= 1440:
 		game_minutes = 0
 		new_day.emit()
