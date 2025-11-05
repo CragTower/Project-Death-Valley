@@ -54,7 +54,7 @@ func try_plant_seed(current_tool: String, player_position: Vector2, player_direc
 	# Converts and sets Atlas coords for a one time call
 	var current_tile = tile_map_layer.get_cell_atlas_coords(target_coords)
 	
-	if current_tile == TILLED_SOIL_ATLAS_COORDS && !crops.has(target_coords):
+	if current_tile == TILLED_SOIL_ATLAS_COORDS and !crops.has(target_coords):
 		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TEMP_SEED_IMAGE)
 		crops[target_coords] = {
 			"type" = current_tool,
@@ -64,6 +64,7 @@ func try_plant_seed(current_tool: String, player_position: Vector2, player_direc
 			
 func try_harvest_crop(player_position: Vector2, player_direction: String):
 	var target_coords = get_player_target_coords(player_position, player_direction)
+	
 	if crops.has(target_coords) and crops[target_coords]["mature"] == true:
 		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
 		if !crops_collected.has(crops[target_coords]["type"]):
@@ -72,7 +73,6 @@ func try_harvest_crop(player_position: Vector2, player_direction: String):
 			}
 		else:
 			crops_collected[crops[target_coords]["type"]]["count"] += 1
-		print(crops_collected["wheat"]["count"])
 		
 		crops.erase(target_coords)
 	
