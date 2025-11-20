@@ -1,19 +1,22 @@
 extends Node2D
 
-const DIRT_ATLAS_COORDS = Vector2i(6, 6)
-const TILLED_SOIL_ATLAS_COORDS = Vector2i(6, 16)
-const TEMP_SEED_IMAGE = Vector2i(0, 0)
-const TEMP_ADOLESCENT_PLANT = Vector2i(0, 16)
-const TEMP_MATURE_PLANT = Vector2i(0, 15)
-const TILE_SET_SOURCE_ID = 10
+const DIRT_ATLAS_COORDS = Vector2i(1, 0)
+const TILLED_SOIL_ATLAS_COORDS = Vector2i(2, 0)
+const TEMP_SEED_IMAGE = Vector2i(0, 2)
+const TEMP_SEEDLING_PLANT = Vector2i(0, 3)
+const TEMP_ADOLESCENT_PLANT = Vector2i(0, 4)
+const TEMP_MATURE_PLANT = Vector2i(0, 5)
+const TILE_SET_SOURCE_ID = 0
+const TILE_SET_CROP_ID = 1
 
 var crops = {}
 var crops_collected = {}
 var day_color = Color(1.0, 1.0, 1.0)
 var night_color = Color(0.3, 0.3, 0.5)
 
-@onready var tile_map_layer = $TileMapLayer
-@onready var tile_size = tile_map_layer.tile_set.tile_size.x # Finds the pixel size of tiles
+@onready var ground_tile_layer = $GroundTileLayer
+@onready var crop_tile_layer = $CropTileLayer
+@onready var tile_size = ground_tile_layer.tile_set.tile_size.x # Finds the pixel size of tiles
 @onready var daylight_change = $CanvasModulate
 
 
@@ -41,32 +44,34 @@ func _on_player_use_item(item_used: String, player_position: Vector2, player_dir
 func try_till_soil(player_position: Vector2, player_direction: String):
 	var target_coords = get_player_target_coords(player_position, player_direction)
 	# Converts and sets Atlas coords for a one time call
-	var current_tile = tile_map_layer.get_cell_atlas_coords(target_coords)
+	var current_tile = ground_tile_layer.get_cell_atlas_coords(target_coords)
 	
 	# Toggles between untilled soil and tilled soil
 	if current_tile == DIRT_ATLAS_COORDS:
-		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
+		ground_tile_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
 	elif current_tile == TILLED_SOIL_ATLAS_COORDS:
-		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, DIRT_ATLAS_COORDS)
+		ground_tile_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, DIRT_ATLAS_COORDS)
 		
 func try_plant_seed(current_tool: String, player_position: Vector2, player_direction: String):
 	var target_coords = get_player_target_coords(player_position, player_direction)
 	# Converts and sets Atlas coords for a one time call
-	var current_tile = tile_map_layer.get_cell_atlas_coords(target_coords)
+	var current_tile = ground_tile_layer.get_cell_atlas_coords(target_coords)
 	
 	if current_tile == TILLED_SOIL_ATLAS_COORDS and !crops.has(target_coords):
-		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TEMP_SEED_IMAGE)
+		crop_tile_layer.set_cell(target_coords, TILE_SET_CROP_ID, TEMP_SEED_IMAGE)
 		crops[target_coords] = {
 			"type" = current_tool,
 			"days_planted" = 0,
 			"mature" = false
 			}
+		print(target_coords)
+		print(current_tile)
 			
 func try_harvest_crop(player_position: Vector2, player_direction: String):
 	var target_coords = get_player_target_coords(player_position, player_direction)
 	
 	if crops.has(target_coords) and crops[target_coords]["mature"] == true:
-		tile_map_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
+		ground_tile_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
 		if !crops_collected.has(crops[target_coords]["type"]):
 			crops_collected[crops[target_coords]["type"]] = {
 				"count" = 1
@@ -89,9 +94,9 @@ func get_player_target_coords(player_position: Vector2, player_direction: String
 		target_position.y -= tile_size
 		
 	# Sets the target's global position relative to the TileMapLayer (still in pixel coords)
-	var local_target = tile_map_layer.to_local(target_position)
+	var local_target = ground_tile_layer.to_local(target_position)
 	# Converts pixel coords to TileMapLayer coords
-	var target_coords = tile_map_layer.local_to_map(local_target)
+	var target_coords = ground_tile_layer.local_to_map(local_target)
 	
 	return target_coords
 	
@@ -122,5 +127,9 @@ func _on_day_changed_grow_crops():
 		crops[tile_coords]["days_planted"] += 1
 		
 		if crops[tile_coords]["days_planted"] == 3:
-			tile_map_layer.set_cell(tile_coords, TILE_SET_SOURCE_ID, TEMP_MATURE_PLANT)
+			crop_tile_layer.set_cell(tile_coords, TILE_SET_CROP_ID, TEMP_MATURE_PLANT)
 			crops[tile_coords]["mature"] = true
+		elif crops[tile_coords]["days_planted"] == 1:
+			crop_tile_layer.set_cell(tile_coords, TILE_SET_CROP_ID, TEMP_SEEDLING_PLANT)
+		elif crops[tile_coords]["days_planted"] == 2:
+			crop_tile_layer.set_cell(tile_coords, TILE_SET_CROP_ID, TEMP_ADOLESCENT_PLANT)
