@@ -1,13 +1,13 @@
 extends Node2D
 
-const DIRT_ATLAS_COORDS = Vector2i(1, 0)
-const TILLED_SOIL_ATLAS_COORDS = Vector2i(2, 0)
+const DIRT_ATLAS_COORDS = Vector2i(5, 0)
+const TILLED_SOIL_ATLAS_COORDS = Vector2i(6, 0)
 const TEMP_SEED_IMAGE = Vector2i(0, 2)
 const TEMP_SEEDLING_PLANT = Vector2i(0, 3)
 const TEMP_ADOLESCENT_PLANT = Vector2i(0, 4)
 const TEMP_MATURE_PLANT = Vector2i(0, 5)
-const TILE_SET_SOURCE_ID = 0
-const TILE_SET_CROP_ID = 1
+const TILE_SET_SOURCE_ID = 1
+const TILE_SET_CROP_ID = 0
 
 var crops = {}
 var crops_collected = {}
@@ -71,7 +71,7 @@ func try_harvest_crop(player_position: Vector2, player_direction: String):
 	var target_coords = get_player_target_coords(player_position, player_direction)
 	
 	if crops.has(target_coords) and crops[target_coords]["mature"] == true:
-		ground_tile_layer.set_cell(target_coords, TILE_SET_SOURCE_ID, TILLED_SOIL_ATLAS_COORDS)
+		crop_tile_layer.erase_cell(target_coords)
 		if !crops_collected.has(crops[target_coords]["type"]):
 			crops_collected[crops[target_coords]["type"]] = {
 				"count" = 1
